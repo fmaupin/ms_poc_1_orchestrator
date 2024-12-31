@@ -17,6 +17,16 @@ Pour plus d'informations sur les images :
 
 ***
 
+### Puller et exécuter images via Docker Compose
+
+1. Authentifiez-vous auprès de GitHub Container Registry et exécutez les services :
+
+```
+./run_services.sh <GITHUB_USERNAME> <GITHUB_TOKEN>
+```
+
+***
+
 ### Auteur
 
 Ce projet a été créé par Fabrice MAUPIN.
