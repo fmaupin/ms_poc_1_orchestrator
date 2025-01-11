@@ -1,0 +1,23 @@
+name: ms-poc1
+
+services:
+  ms_poc_1:
+    image: ghcr.io/fmaupin/mspoc1:latest
+    container_name: mspoc1_container
+    ports:
+      - "8080:8080"
+    environment:
+      - MY_PASSWORD_DB=${MY_PASSWORD_DB}
+      - MY_PASSWORD_BROKER=${MY_PASSWORD_BROKER}
+      - SPRING_RABBITMQ_HOST=rabbitmq
+
+  rabbitmq:
+    image: ghcr.io/fmaupin/rabbit-mspoc:latest
+    container_name: rabbit_mspoc_container
+    ports:
+      - "5672:5672"
+      - "5673:5673"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
