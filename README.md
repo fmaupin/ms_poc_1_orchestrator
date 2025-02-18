@@ -25,6 +25,10 @@ Pour plus d'informations sur les images :
 ./run_services.sh <GITHUB_USERNAME> <GITHUB_TOKEN>
 ```
 
+micro-service => mspoc1
+broker messages => rabbitMQ
+monitoring containers => cAdvisor -> Prometheus -> Grafana
+
 ***
 
 ### Auteur

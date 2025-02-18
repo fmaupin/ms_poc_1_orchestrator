@@ -1,7 +1,7 @@
 name: ms-poc1
 
 services:
-  ms_poc_1:
+  mspoc1:
     image: ghcr.io/fmaupin/mspoc1:latest
     container_name: mspoc1_container
     ports:
@@ -10,6 +10,8 @@ services:
       - MY_PASSWORD_DB=${MY_PASSWORD_DB}
       - MY_PASSWORD_BROKER=${MY_PASSWORD_BROKER}
       - SPRING_RABBITMQ_HOST=rabbitmq
+    networks:
+      - monitoring-network
 
   rabbitmq:
     image: ghcr.io/fmaupin/rabbit-mspoc:latest
@@ -21,3 +23,52 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    networks:
+      - monitoring-network
+
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - monitoring-network
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - monitoring-network
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - monitoring-network
+    restart: always
+
+  network-test:
+    image: nicolaka/netshoot
+    container_name: network-test
+    networks:
+      - monitoring-network
+    command: sleep infinity
+
+networks:
+  monitoring-network:
+    driver: bridge
