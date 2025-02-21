@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cadvisor
+  labels:
+    app: cadvisor
+    security: high
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cadvisor
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: cadvisor
+      annotations:
+        seccomp.security.alpha.kubernetes.io/pod: 'runtime/default'
+        security.alpha.kubernetes.io/sysctls: 'kernel.msgmax=65536'
+    spec:
+      serviceAccountName: cadvisor
+      automountServiceAccountToken: true
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: cadvisor
+        image: google/cadvisor:v0.39.3
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          seLinuxOptions:
+            type: container_runtime_t
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "200Mi"
+            ephemeral-storage: "1Gi"
+          limits:
+            cpu: "200m"
+            memory: "400Mi"
+            ephemeral-storage: "2Gi"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
+        volumeMounts:
+          - name: rootfs
+            mountPath: /rootfs
+            readOnly: true
+          - name: var-run
+            mountPath: /var/run
+            readOnly: true
+          - name: sys
+            mountPath: /sys
+            readOnly: true
+          - name: docker
+            mountPath: /var/lib/docker
+            readOnly: true
+      volumes:
+        - name: rootfs
+          hostPath:
+            path: /
+            type: Directory
+        - name: var-run
+          hostPath:
+            path: /var/run
+            type: Directory
+        - name: sys
+          hostPath:
+            path: /sys
+            type: Directory
+        - name: docker
+          hostPath:
+            path: /var/lib/docker
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cadvisor
+  labels:
+    app: cadvisor
+spec:
+  selector:
+    app: cadvisor
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8080

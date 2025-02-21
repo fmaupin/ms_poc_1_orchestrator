@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      automountServiceAccountToken: true
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.30.3
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+            ephemeral-storage: "2Gi"
+        volumeMounts:
+          - name: prometheus-storage
+            mountPath: /prometheus
+          - name: prometheus-config
+            mountPath: /etc/prometheus/prometheus.yml
+            subPath: prometheus.yml
+      restartPolicy: Always
+      volumes:
+        - name: prometheus-storage
+          persistentVolumeClaim:
+          claimName: prometheus-pvc
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+            items:
+              - key: prometheus.yml
+                path: prometheus.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+spec:
+  selector:
+    app: prometheus
+  ports:
+  - name: "9090"
+    port: 9090
+    targetPort: 9090

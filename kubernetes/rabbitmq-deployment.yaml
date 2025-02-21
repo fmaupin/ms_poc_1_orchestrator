@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: rabbitmq
+          image: ghcr.io/fmaupin/rabbit-mspoc:1.0.0
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+              ephemeral-storage: "1Gi"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+              ephemeral-storage: "2Gi"
+          volumeMounts:
+            - mountPath: /var/lib/rabbitmq
+              name: rabbitmq-storage
+          env:
+            - name: RABBITMQ_DEFAULT_PASS
+            - name: RABBITMQ_DEFAULT_USER
+          ports:
+            - containerPort: 5672
+              protocol: TCP
+            - containerPort: 5673
+              protocol: TCP
+            - containerPort: 15672
+              protocol: TCP
+      restartPolicy: Always
+      volumes:
+        - name: rabbitmq-storage
+          persistentVolumeClaim:
+            claimName: rabbitmq-pvc
+              protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: "5672"
+      port: 5672
+      targetPort: 5672
+    - name: "5673"
+      port: 5673
+      targetPort: 5673
+    - name: "15672"
+      port: 15672
+      targetPort: 15672
+

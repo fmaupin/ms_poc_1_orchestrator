@@ -1,0 +1,64 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cadvisor
+rules:
+- apiGroups: ['']
+  resources:
+    - nodes
+    - nodes/metrics
+    - nodes/stats
+    - nodes/proxy
+  verbs:
+    - get
+    - list
+    - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cadvisor
+  namespace: mspoc
+rules:
+- apiGroups: ['']
+  resources:
+    - pods
+    - services
+    - endpoints
+  verbs:
+    - get
+    - list
+    - watch
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cadvisor
+  namespace: mspoc
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cadvisor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cadvisor
+subjects:
+- kind: ServiceAccount
+  name: cadvisor
+  namespace: mspoc
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cadvisor
+  namespace: mspoc
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cadvisor
+subjects:
+- kind: ServiceAccount
+  name: cadvisor
+  namespace: mspoc

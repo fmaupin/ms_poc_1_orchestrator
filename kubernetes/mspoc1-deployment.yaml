@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mspoc1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mspoc1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: mspoc1
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: mspoc1-container
+          image: ghcr.io/fmaupin/mspoc1:v1.0.0
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+              ephemeral-storage: "1Gi"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+              ephemeral-storage: "2Gi"
+          env:
+            - name: MY_PASSWORD_DB
+            - name: MY_PASSWORD_BROKER
+            - name: SPRING_RABBITMQ_HOST
+              value: rabbitmq
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mspoc1
+spec:
+  selector:
+    app: mspoc1
+  ports:
+    - name: "8080"
+      port: 8080
+      targetPort: 8080
