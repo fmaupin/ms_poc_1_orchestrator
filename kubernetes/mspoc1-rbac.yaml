@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mspoc1-sa
+  namespace: mspoc
+  labels:
+    app: mspoc1
+    security: high
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mspoc1-secrets-role
+  namespace: mspoc
+  labels:
+    app: mspoc1
+    security: high
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["mspoc1-secrets"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mspoc1-secrets-rb
+  namespace: mspoc
+  labels:
+    app: mspoc1
+    security: high
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mspoc1-secrets-role
+subjects:
+- kind: ServiceAccount
+  name: mspoc1-sa
+  namespace: mspoc
