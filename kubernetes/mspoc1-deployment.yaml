@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mspoc1
+  namespace: mspoc
+  labels:
+    app: mspoc1
+    security: high
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mspoc1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: mspoc1
+        security: high
+      annotations:
+        seccomp.security.alpha.kubernetes.io/pod: 'runtime/default'
+    spec:
+      serviceAccountName: mspoc1-sa
+      automountServiceAccountToken: true
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mspoc1-container
+          image: ghcr.io/fmaupin/mspoc1:v1.0.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          seLinuxOptions:
+            type: container_runtime_t
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+              ephemeral-storage: "1Gi"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+              ephemeral-storage: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          env:
+            - name: MY_PASSWORD_DB
+              valueFrom:
+                secretKeyRef:
+                  name: mspoc1-secrets
+                  key: db-password
+            - name: MY_PASSWORD_BROKER
+              valueFrom:
+                secretKeyRef:
+                  name: mspoc1-secrets
+                  key: broker-password
+            - name: SPRING_RABBITMQ_HOST
+              value: rabbitmq
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mspoc1
+  namespace: mspoc
+  labels:
+    app: mspoc1
+    security: high
+spec:
+  selector:
+    app: mspoc1
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8080

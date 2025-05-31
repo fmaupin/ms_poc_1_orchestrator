@@ -4,6 +4,12 @@
 GITHUB_USERNAME=$1
 GITHUB_TOKEN=$2
 
+# Vérifier présence du fichier .env
+if [ ! -f .env ]; then
+    echo "Erreur : fichier .env manquant"
+    exit 1
+fi
+
 # Authentifiez-vous auprès de GitHub Container Registry
 echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
 if [ $? -ne 0 ]; then

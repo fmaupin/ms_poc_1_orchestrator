@@ -26,7 +26,9 @@ Pour plus d'informations sur les images :
 ```
 
 micro-service => mspoc1
+
 broker messages => rabbitMQ
+
 monitoring containers => cAdvisor -> Prometheus -> Grafana
 
 ***

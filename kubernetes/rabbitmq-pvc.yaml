@@ -1,0 +1,17 @@
+aapiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+  namespace: mspoc
+  labels:
+    app: rabbitmq
+    security: high
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      app: rabbitmq
